@@ -2889,9 +2889,9 @@ Reglas de respuesta:
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
-        let currentModel = parsed.model || 'gemini-2.0-flash';
-        if (currentModel === 'gemini-1.5-flash') {
-          currentModel = 'gemini-2.0-flash';
+        let currentModel = parsed.model || 'gemini-3.8-flash';
+        if (currentModel === 'gemini-1.5-flash' || currentModel === 'gemini-2.0-flash' || currentModel === 'gemini-2.5-flash') {
+          currentModel = 'gemini-3.8-flash';
         }
         return {
           enabled: parsed.enabled !== false,
@@ -2910,7 +2910,7 @@ Reglas de respuesta:
       enabled: true,
       provider: 'gemini',
       apiKey: '',
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.8-flash',
       temperature: 0.7,
       maxTokens: 350,
       promptVersion: '2.0 - Taller 3',
@@ -2921,12 +2921,11 @@ Reglas de respuesta:
   getModelOptionsHtml(provider, selectedModel = '') {
     if (provider === 'gemini') {
       const geminiModels = [
-        { id: 'gemini-2.0-flash', label: '⚡ gemini-2.0-flash (Recomendado actual · Rápido y multimodal)' },
-        { id: 'gemini-1.5-flash-latest', label: '⚡ gemini-1.5-flash-latest (Alias estable oficial)' },
-        { id: 'gemini-2.5-flash', label: '🚀 gemini-2.5-flash (Generación avanzada)' },
-        { id: 'gemini-1.5-flash-8b', label: '⚡ gemini-1.5-flash-8b (Ultra ligero y bajo consumo)' },
-        { id: 'gemini-1.5-pro-latest', label: '🧠 gemini-1.5-pro-latest (Razonamiento profundo)' },
-        { id: 'gemini-2.0-flash-exp', label: '🧪 gemini-2.0-flash-exp (Experimental)' }
+        { id: 'gemini-3.8-flash', label: '⚡ gemini-3.8-flash (Recomendado Oficial Google 2026 · Más Rápido)' },
+        { id: 'gemini-3.5-flash', label: '⚡ gemini-3.5-flash (Versión Flash 3.5 Estable)' },
+        { id: 'gemini-3.8-pro', label: '🧠 gemini-3.8-pro (Razonamiento Avanzado y Precisión)' },
+        { id: 'gemini-2.0-flash', label: '🔹 gemini-2.0-flash' },
+        { id: 'gemini-1.5-flash-latest', label: '🔹 gemini-1.5-flash-latest' }
       ];
 
       let options = geminiModels.map(m => `
@@ -3215,7 +3214,7 @@ Reglas de respuesta:
   handleIAProviderChange(provider) {
     const modelSelect = document.getElementById('admin-ia-model');
     if (!modelSelect) return;
-    const defaultModel = (provider === 'gemini') ? 'gemini-2.0-flash' : (provider === 'openai') ? 'gpt-4o-mini' : 'wes-local-rules';
+    const defaultModel = (provider === 'gemini') ? 'gemini-3.8-flash' : (provider === 'openai') ? 'gpt-4o-mini' : 'wes-local-rules';
     modelSelect.innerHTML = this.getModelOptionsHtml(provider, defaultModel);
     modelSelect.value = defaultModel;
   },
@@ -3223,16 +3222,18 @@ Reglas de respuesta:
   async fetchWorkingGeminiModel(apiKey, preferredModel) {
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
-      if (!res.ok) return preferredModel || 'gemini-2.0-flash';
+      if (!res.ok) return preferredModel || 'gemini-3.8-flash';
       const data = await res.json();
       const available = (data.models || [])
         .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
         .map(m => m.name.replace(/^models\//, ''));
 
-      if (available.length === 0) return preferredModel || 'gemini-2.0-flash';
-      if (preferredModel && available.includes(preferredModel)) return preferredModel;
+      if (available.length === 0) return preferredModel || 'gemini-3.8-flash';
+      if (preferredModel && available.includes(preferredModel) && preferredModel !== 'gemini-2.5-flash' && preferredModel !== 'gemini-1.5-flash') {
+        return preferredModel;
+      }
 
-      const candidates = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-2.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro-latest', 'gemini-pro'];
+      const candidates = ['gemini-3.8-flash', 'gemini-3.5-flash', 'gemini-3.8-pro', 'gemini-2.0-flash', 'gemini-1.5-flash-latest'];
       for (const c of candidates) {
         if (available.includes(c)) return c;
       }
@@ -3241,7 +3242,7 @@ Reglas de respuesta:
 
       return available[0];
     } catch (e) {
-      return preferredModel || 'gemini-2.0-flash';
+      return preferredModel || 'gemini-3.8-flash';
     }
   },
 
@@ -3288,7 +3289,7 @@ Reglas de respuesta:
         optionsHtml += `<option value="${m}">${badge}${m} ${isFlash ? '(Recomendado)' : ''}</option>`;
       });
 
-      const best = available.find(m => m.includes('2.0-flash') || m.includes('1.5-flash-latest') || m.includes('flash')) || available[0];
+      const best = available.find(m => m.includes('3.8-flash') || m.includes('3.5-flash') || m.includes('2.0-flash') || m.includes('flash')) || available[0];
       if (modelSelect) {
         modelSelect.innerHTML = optionsHtml;
         modelSelect.value = best;
@@ -3499,18 +3500,18 @@ Reglas de respuesta:
           })
         });
 
-        // Si falló por modelo, auto-detectar de inmediato
+        // Si falló por modelo (404, not found, o no longer available), auto-detectar de inmediato
         if (!res.ok) {
           const errData = await res.json().catch(() => ({}));
           const errMsg = errData?.error?.message || '';
-          if (errMsg.includes('not found') || errMsg.includes('not supported') || res.status === 404) {
+          if (errMsg.includes('not found') || errMsg.includes('not supported') || errMsg.includes('no longer available') || res.status === 404) {
             const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
             if (listRes.ok) {
               const listData = await listRes.json();
               const available = (listData.models || [])
                 .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
                 .map(m => m.name.replace(/^models\//, ''));
-              const fallback = available.find(m => m.includes('flash')) || available[0];
+              const fallback = available.find(m => m.includes('3.8-flash') || m.includes('3.5-flash') || m.includes('flash')) || available[0];
               if (fallback && fallback !== model) {
                 model = fallback;
                 if (modelInput) modelInput.value = model;
