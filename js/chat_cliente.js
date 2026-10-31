@@ -185,6 +185,19 @@
         toggleClientChat();
       }
     });
+
+    window.addEventListener('wes_ai_config_updated', (e) => {
+      const wrapper = document.getElementById('wes-client-chat-wrapper');
+      if (e.detail && e.detail.enabled === false) {
+        if (wrapper) wrapper.classList.add('hidden');
+      } else {
+        if (!wrapper) {
+          renderChatLauncherAndModal();
+        } else {
+          wrapper.classList.remove('hidden');
+        }
+      }
+    });
   }
 
   // Abrir o cerrar la ventana de chat
@@ -283,9 +296,91 @@
   }
 
   async function queryAIBackend(userMessage) {
+    // 1. Obtener configuración de IA guardada por el administrador en wes_ai_config (Taller 3)
+    let aiConfig = null;
+    try {
+      const stored = localStorage.getItem('wes_ai_config');
+      if (stored) {
+        aiConfig = JSON.parse(stored);
+      }
+    } catch (e) {}
+
+    // Si el administrador desactivó el asistente explícitamente:
+    if (aiConfig && aiConfig.enabled === false) {
+      return null;
+    }
+
+    // 2. Si el administrador configuró una API Key (Google Gemini u OpenAI)
+    if (aiConfig && aiConfig.apiKey && aiConfig.apiKey.length > 5) {
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout Taller 3
+        const provider = aiConfig.provider || 'gemini';
+        const model = aiConfig.model || (provider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini');
+        const systemPrompt = aiConfig.systemPrompt || 'Eres el Asistente Técnico Virtual de Warn Electrical Services (WES) en Moca, República Dominicana. Responde en español de forma cordial, profesional y concisa.';
+        const temperature = aiConfig.temperature !== undefined ? Number(aiConfig.temperature) : 0.7;
+        const maxTokens = aiConfig.maxTokens ? Number(aiConfig.maxTokens) : 350;
+
+        let reply = '';
+
+        if (provider === 'gemini') {
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiConfig.apiKey}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: `${systemPrompt}\n\nPregunta del cliente: ${userMessage}` }]
+              }],
+              generationConfig: {
+                maxOutputTokens: maxTokens,
+                temperature: temperature
+              }
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          }
+        } else if (provider === 'openai') {
+          const res = await fetch('https://api.openai.com/v1/chat/completions', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${aiConfig.apiKey}`
+            },
+            body: JSON.stringify({
+              model: model,
+              messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userMessage }
+              ],
+              max_tokens: maxTokens,
+              temperature: temperature
+            }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            reply = data?.choices?.[0]?.message?.content;
+          }
+        }
+
+        if (reply && reply.trim()) {
+          return { ok: true, reply: reply.trim(), provider };
+        }
+      } catch (err) {
+        console.warn('[WES Chat] Error consultando API de IA:', err);
+      }
+    }
+
+    // 3. Fallback a endpoint local /api/chat si estuviese activo
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout Taller 3
+      const timeoutId = setTimeout(() => controller.abort(), 3000);
       const res = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -293,15 +388,15 @@
         signal: controller.signal
       });
       clearTimeout(timeoutId);
-      if (!res.ok) return null;
-      const data = await res.json();
-      if (data && data.ok && data.reply) {
-        return data;
+      if (res.ok) {
+        const data = await res.json();
+        if (data && data.ok && data.reply) {
+          return data;
+        }
       }
-      return null;
-    } catch (e) {
-      return null;
-    }
+    } catch (e) {}
+
+    return null;
   }
 
   // Manejar clics de los chips de sugerencia rápida

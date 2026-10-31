@@ -232,6 +232,7 @@ const AdminApp = {
       { header: 'Control y Configuración' },
       { id: 'usuarios', name: 'Usuarios y Roles', icon: 'fa-users-cog', module: 'usuarios' },
       { id: 'permisos', name: 'Matriz de Permisos', icon: 'fa-shield-alt', module: 'usuarios' },
+      { id: 'ia_config', name: 'Inteligencia Artificial (IA)', icon: 'fa-robot', module: 'ajustes' },
       { id: 'ajustes', name: 'Ajustes & Toggles', icon: 'fa-sliders-h', module: 'ajustes' },
       { id: 'correos', name: 'Gestión de Correos', icon: 'fa-mail-bulk', module: 'ajustes' },
       { id: 'auditoria', name: 'Historial Auditoría', icon: 'fa-history', module: 'auditoria' }
@@ -282,7 +283,7 @@ const AdminApp = {
     const user = AdminAuth.getCurrentUser();
     
     // Verificar permiso para el módulo solicitado
-    const mappedModule = (moduleId === 'permisos') ? 'usuarios' : (moduleId === 'correos') ? 'ajustes' : moduleId;
+    const mappedModule = (moduleId === 'permisos') ? 'usuarios' : (moduleId === 'correos' || moduleId === 'ia_config') ? 'ajustes' : moduleId;
     if (mappedModule !== 'dashboard' && !PermissionsManager.hasPermission(mappedModule, 'ver', user)) {
       showToast('No tienes autorización para realizar esta acción', 'error');
       return;
@@ -301,6 +302,7 @@ const AdminApp = {
       categorias: 'Gestión de Categorías',
       usuarios: 'Directorio de Usuarios y Roles',
       permisos: 'Matriz Interactiva de Permisos (RBAC)',
+      ia_config: 'Gestión de Inteligencia Artificial (IA), Prompts y APIs',
       ajustes: 'Ajustes Generales y Conmutadores Públicos',
       correos: 'Enrutamiento y Pruebas de Notificaciones',
       auditoria: 'Historial de Auditoría (Audit Log)'
@@ -340,6 +342,9 @@ const AdminApp = {
         break;
       case 'permisos':
         this.renderPermisos(container);
+        break;
+      case 'ia_config':
+        this.renderIAConfig(container);
         break;
       case 'ajustes':
         this.renderAjustes(container);
@@ -2854,6 +2859,497 @@ const AdminApp = {
       supportNotice: sNotice
     });
     showToast('Mensajes de aviso guardados correctamente.', 'success');
+  },
+
+  // ========================================================================
+  // VISTA: GESTIÓN DE INTELIGENCIA ARTIFICIAL (IA), PROMPTS Y RECURSOS
+  // Taller 3 - AIDET · Control Exclusivo de Administrador
+  // ========================================================================
+  getIAConfig() {
+    const DEFAULT_PROMPT = `Eres el Asistente Virtual Oficial de Warn Electrical Services, SRL (WES), empresa líder en Moca y la región del Cibao, República Dominicana.
+Especialidades WES:
+- Motores para portones eléctricos (CAME BXV 400kg, 600kg, 800kg y 1000kg industriales).
+- Laboratorio técnico de inversores y bancos de baterías (Trace, Magnum, Outback).
+- Seguridad electrónica (Cámaras IP Dahua/Hikvision, NVR, control de acceso ZKTeco).
+- Instalaciones y mantenimiento eléctrico general.
+Reglas de respuesta:
+1. Responde en español con tono cordial, profesional y de servicio.
+2. Respuestas directas y concisas (máximo 2 a 3 párrafos).
+3. Nunca inventes precios exactos ni estados de tickets confidenciales. Invita siempre a coordinar con el equipo comercial o pedir visita técnica.`;
+
+    const stored = localStorage.getItem('wes_ai_config');
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        return {
+          enabled: parsed.enabled !== false,
+          provider: parsed.provider || 'gemini',
+          apiKey: parsed.apiKey || '',
+          model: parsed.model || 'gemini-1.5-flash',
+          temperature: parsed.temperature !== undefined ? parsed.temperature : 0.7,
+          maxTokens: parsed.maxTokens || 350,
+          promptVersion: parsed.promptVersion || '2.0 - Taller 3',
+          systemPrompt: parsed.systemPrompt || DEFAULT_PROMPT
+        };
+      } catch (e) {}
+    }
+
+    return {
+      enabled: true,
+      provider: 'gemini',
+      apiKey: '',
+      model: 'gemini-1.5-flash',
+      temperature: 0.7,
+      maxTokens: 350,
+      promptVersion: '2.0 - Taller 3',
+      systemPrompt: DEFAULT_PROMPT
+    };
+  },
+
+  renderIAConfig(container) {
+    const config = this.getIAConfig();
+    const hasKey = Boolean(config.apiKey && config.apiKey.length > 5);
+
+    container.innerHTML = `
+      <div class="space-y-6 animate-fadeIn">
+        
+        <!-- Encabezado de la Sección -->
+        <div class="bg-gradient-to-r from-wes-dark via-wes-blue to-slate-900 rounded-3xl p-6 text-white shadow-xl flex flex-col md:flex-row md:items-center md:justify-between gap-4 border border-wes-gold/30">
+          <div class="flex items-center space-x-3.5">
+            <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-amber-500 to-wes-gold text-slate-950 flex items-center justify-center font-black text-xl shadow-inner">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div>
+              <div class="flex items-center space-x-2">
+                <h3 class="text-base font-extrabold font-brand tracking-wide text-white">Gestión de Inteligencia Artificial (IA) & APIs</h3>
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${hasKey ? 'bg-emerald-500 text-white' : 'bg-amber-400 text-slate-950'}">
+                  ${hasKey ? '● API Vinculada' : '● Modo Local Autónomo'}
+                </span>
+              </div>
+              <p class="text-xs text-slate-300 mt-0.5">Control exclusivo de Administrador: Configuración de modelos, Prompt maestro, APIs de IA y parámetros de respuesta (Taller 3 - AIDET).</p>
+            </div>
+          </div>
+          <div class="flex items-center space-x-2 shrink-0">
+            <button type="button" onclick="AdminApp.testIAConnection()" id="btn-ia-test-ping" class="px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl text-xs font-bold transition flex items-center space-x-1.5 border border-white/20">
+              <i class="fas fa-bolt text-amber-400"></i>
+              <span>Probar Conexión con IA</span>
+            </button>
+            <a href="index.html" target="_blank" class="px-4 py-2 bg-wes-gold hover:bg-amber-400 text-slate-950 rounded-xl text-xs font-black transition flex items-center space-x-1.5 shadow-md">
+              <i class="fas fa-external-link-alt text-xs"></i>
+              <span>Ver Chat en Web</span>
+            </a>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+          <!-- Columna Izquierda: Proveedor, Clave y Parámetros (5 cols) -->
+          <div class="lg:col-span-5 space-y-6">
+
+            <!-- Panel 1: Proveedor y Clave de API -->
+            <form onsubmit="AdminApp.handleSaveIAConfig(event)" class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+              <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-2">
+                  <i class="fas fa-key text-wes-gold"></i>
+                  <span>Proveedor y Credenciales de API</span>
+                </h4>
+                <span class="text-[10px] text-slate-400 font-mono">Taller 3 AIDET</span>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Proveedor de Inteligencia Artificial *</label>
+                <select id="admin-ia-provider" name="provider" onchange="AdminApp.handleIAProviderChange(this.value)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
+                  <option value="gemini" ${config.provider === 'gemini' ? 'selected' : ''}>Google Gemini (Gemini 1.5 Flash / 2.0) [Recomendado]</option>
+                  <option value="openai" ${config.provider === 'openai' ? 'selected' : ''}>OpenAI (GPT-4o-mini / GPT-4o)</option>
+                  <option value="local" ${config.provider === 'local' ? 'selected' : ''}>Modo Autónomo WES (Base de conocimientos local sin API)</option>
+                </select>
+                <p class="text-[11px] text-slate-500 mt-1">Google Gemini es gratuito para uso estándar en Google AI Studio.</p>
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-bold text-slate-700">Clave Secreta de API (API Key) *</label>
+                  <button type="button" onclick="AdminApp.toggleIAPasswordVisibility()" class="text-[11px] text-wes-blue hover:underline font-semibold flex items-center space-x-1">
+                    <i id="ia-key-eye-icon" class="fas fa-eye text-xs"></i>
+                    <span id="ia-key-eye-text">Mostrar</span>
+                  </button>
+                </div>
+                <div class="relative">
+                  <input type="password" id="admin-ia-key" name="apiKey" value="${config.apiKey ? escapeHtml(config.apiKey) : ''}" placeholder="AIzaSy... (Gemini) o sk-... (OpenAI)" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none pr-10">
+                  <span class="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-slate-400">
+                    <i class="fas fa-shield-alt text-xs text-emerald-600"></i>
+                  </span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1 flex items-center space-x-1">
+                  <i class="fas fa-lock text-emerald-600"></i>
+                  <span>Almacenada de forma protegida en el navegador. Nunca se comparte en el repositorio público.</span>
+                </p>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Modelo Seleccionado</label>
+                <input type="text" id="admin-ia-model" name="model" value="${escapeHtml(config.model)}" placeholder="gemini-1.5-flash" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
+              </div>
+
+              <!-- Parámetros del Modelo (Taller 3) -->
+              <div class="pt-2 border-t border-slate-100 space-y-3">
+                <div>
+                  <div class="flex items-center justify-between text-xs font-bold text-slate-700 mb-1">
+                    <span>Temperatura (Creatividad vs. Precisión)</span>
+                    <span id="label-ia-temp" class="font-mono text-wes-blue">${config.temperature}</span>
+                  </div>
+                  <input type="range" id="admin-ia-temp" name="temperature" min="0" max="1" step="0.1" value="${config.temperature}" oninput="document.getElementById('label-ia-temp').textContent = this.value" class="w-full h-1.5 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-wes-blue">
+                  <div class="flex justify-between text-[10px] text-slate-400 mt-0.5">
+                    <span>0.0 (Preciso / Técnico)</span>
+                    <span>0.7 (Recomendado)</span>
+                    <span>1.0 (Creativo)</span>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-bold text-slate-700 mb-1">Límite Máximo de Tokens (Max Tokens)</label>
+                  <input type="number" id="admin-ia-tokens" name="maxTokens" min="150" max="1500" step="50" value="${config.maxTokens}" class="w-full p-2 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800">
+                  <p class="text-[10px] text-slate-400 mt-0.5">Limita el tamaño de la respuesta para controlar latencia y consumo.</p>
+                </div>
+              </div>
+
+              <div class="pt-3 border-t border-slate-100 flex items-center justify-between">
+                <span class="text-[10px] text-emerald-600 font-bold flex items-center">
+                  <i class="fas fa-check-circle mr-1"></i> Configuración WES
+                </span>
+                <button type="submit" class="px-5 py-2.5 bg-wes-blue hover:bg-wes-dark active:scale-95 text-white font-bold rounded-xl text-xs transition shadow-md flex items-center space-x-1.5 border border-wes-gold/40">
+                  <i class="fas fa-save text-wes-gold"></i>
+                  <span>Guardar Credenciales y Parámetros</span>
+                </button>
+              </div>
+            </form>
+
+            <!-- Panel 2: Conmutadores y Políticas -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-3">
+              <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-2 border-b border-slate-100 pb-2">
+                <i class="fas fa-toggle-on text-emerald-600"></i>
+                <span>Políticas de Interacción y Resguardo</span>
+              </h4>
+
+              <div class="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div>
+                  <span class="text-xs font-bold text-slate-800 block">Habilitar Asistente en Página Principal</span>
+                  <span class="text-[11px] text-slate-500">Muestra el botón flotante de chat a los clientes en web.</span>
+                </div>
+                <label class="relative inline-flex items-center cursor-pointer">
+                  <input type="checkbox" id="toggle-ia-chat-client" ${config.enabled ? 'checked' : ''} onchange="AdminApp.toggleIAChatClient(this.checked)" class="sr-only peer">
+                  <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-wes-blue"></div>
+                </label>
+              </div>
+
+              <div class="p-3 bg-amber-50/70 border border-amber-200 rounded-xl text-[11px] text-amber-950 space-y-1">
+                <div class="font-bold flex items-center space-x-1">
+                  <i class="fas fa-user-shield text-amber-600"></i>
+                  <span>Principio Human-in-the-Loop (Taller 3)</span>
+                </div>
+                <p>Cualquier solicitud de soporte técnico o cotización iniciada desde el chat genera un borrador visible que el usuario debe confirmar antes de registrarse en la base de datos oficial.</p>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Columna Derecha: Prompt Maestro y Consola de Pruebas (7 cols) -->
+          <div class="lg:col-span-7 space-y-6">
+
+            <!-- Panel 3: Editor de Prompt de Sistema WES -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+              <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <div>
+                  <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-2">
+                    <i class="fas fa-scroll text-purple-600"></i>
+                    <span>Prompt Maestro del Asistente (System Prompt)</span>
+                  </h4>
+                  <p class="text-[11px] text-slate-500 mt-0.5">Define la personalidad, reglas de negocio, límites y tono de respuesta del Asistente Virtual WES.</p>
+                </div>
+                <span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded-md text-[10px] font-mono font-bold">${escapeHtml(config.promptVersion)}</span>
+              </div>
+
+              <div>
+                <label class="block text-xs font-bold text-slate-700 mb-1">Instrucciones de Sistema (System Prompt) *</label>
+                <textarea id="admin-ia-system-prompt" rows="12" class="w-full p-3.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none leading-relaxed shadow-inner">${escapeHtml(config.systemPrompt)}</textarea>
+                <p class="text-[11px] text-slate-400 mt-1">Este prompt se envía de forma oculta en cada consulta para gobernar las respuestas del modelo.</p>
+              </div>
+
+              <div class="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-100">
+                <button type="button" onclick="AdminApp.resetDefaultIAPrompt()" class="px-3 py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-bold transition flex items-center space-x-1 border border-rose-200">
+                  <i class="fas fa-undo"></i>
+                  <span>Restaurar Prompt Oficial WES</span>
+                </button>
+                <button type="button" onclick="AdminApp.saveIAPromptOnly()" class="px-5 py-2.5 bg-wes-blue hover:bg-wes-dark text-white rounded-xl text-xs font-bold transition shadow-md flex items-center space-x-1.5 border border-wes-gold/40">
+                  <i class="fas fa-save text-wes-gold"></i>
+                  <span>Guardar Cambios de Prompt</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Panel 4: Consola Interactiva de Pruebas de Administrador -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm space-y-4">
+              <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider flex items-center space-x-2">
+                  <i class="fas fa-terminal text-emerald-600"></i>
+                  <span>Consola de Prueba Interactiva</span>
+                </h4>
+                <span class="text-[10px] text-slate-400">Verificar respuesta del modelo</span>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                  <input type="text" id="admin-ia-test-input" placeholder="Escribe una pregunta de prueba (ej: ¿Tienen motores CAME para 800kg?)..." class="flex-1 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
+                  <button type="button" onclick="AdminApp.testIAPromptConsole()" id="btn-ia-console-run" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs transition shadow flex items-center space-x-1.5 shrink-0">
+                    <i class="fas fa-paper-plane text-xs"></i>
+                    <span>Probar</span>
+                  </button>
+                </div>
+
+                <!-- Resultado de la Prueba en Vivo -->
+                <div id="admin-ia-test-result" class="hidden p-4 rounded-xl border text-xs space-y-2"></div>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    `;
+  },
+
+  toggleIAPasswordVisibility() {
+    const input = document.getElementById('admin-ia-key');
+    const icon = document.getElementById('ia-key-eye-icon');
+    const text = document.getElementById('ia-key-eye-text');
+    if (!input) return;
+
+    if (input.type === 'password') {
+      input.type = 'text';
+      if (icon) icon.className = 'fas fa-eye-slash text-xs';
+      if (text) text.textContent = 'Ocultar';
+    } else {
+      input.type = 'password';
+      if (icon) icon.className = 'fas fa-eye text-xs';
+      if (text) text.textContent = 'Mostrar';
+    }
+  },
+
+  handleIAProviderChange(provider) {
+    const modelInput = document.getElementById('admin-ia-model');
+    if (!modelInput) return;
+    if (provider === 'gemini') {
+      modelInput.value = 'gemini-1.5-flash';
+    } else if (provider === 'openai') {
+      modelInput.value = 'gpt-4o-mini';
+    } else if (provider === 'local') {
+      modelInput.value = 'wes-local-rules';
+    }
+  },
+
+  handleSaveIAConfig(e) {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!PermissionsManager.checkOrAlert('ajustes', 'configurar')) return;
+
+    const current = this.getIAConfig();
+    const provider = document.getElementById('admin-ia-provider')?.value || current.provider;
+    const apiKey = document.getElementById('admin-ia-key')?.value.trim() || '';
+    const model = document.getElementById('admin-ia-model')?.value.trim() || current.model;
+    const temp = parseFloat(document.getElementById('admin-ia-temp')?.value) || current.temperature;
+    const tokens = parseInt(document.getElementById('admin-ia-tokens')?.value, 10) || current.maxTokens;
+    const prompt = document.getElementById('admin-ia-system-prompt')?.value.trim() || current.systemPrompt;
+
+    const updated = {
+      enabled: current.enabled,
+      provider,
+      apiKey,
+      model,
+      temperature: temp,
+      maxTokens: tokens,
+      promptVersion: current.promptVersion,
+      systemPrompt: prompt
+    };
+
+    localStorage.setItem('wes_ai_config', JSON.stringify(updated));
+    window.dispatchEvent(new CustomEvent('wes_ai_config_updated', { detail: updated }));
+    showToast('Configuración de IA, credenciales y parámetros guardados con éxito.', 'success');
+    this.renderIAConfig(document.getElementById('admin-dynamic-content'));
+  },
+
+  saveIAPromptOnly() {
+    if (!PermissionsManager.checkOrAlert('ajustes', 'configurar')) return;
+    const promptText = document.getElementById('admin-ia-system-prompt')?.value.trim();
+    if (!promptText) {
+      showToast('El System Prompt no puede estar vacío.', 'error');
+      return;
+    }
+
+    const current = this.getIAConfig();
+    current.systemPrompt = promptText;
+    current.promptVersion = '2.1 - ' + new Date().toLocaleDateString('es-DO');
+
+    localStorage.setItem('wes_ai_config', JSON.stringify(current));
+    window.dispatchEvent(new CustomEvent('wes_ai_config_updated', { detail: current }));
+    showToast('Prompt Maestro del Asistente actualizado.', 'success');
+  },
+
+  resetDefaultIAPrompt() {
+    if (!confirm('¿Deseas restaurar el Prompt Oficial predeterminado de WES?')) return;
+    localStorage.removeItem('wes_ai_config');
+    showToast('Prompt predeterminado restaurado.', 'info');
+    this.renderIAConfig(document.getElementById('admin-dynamic-content'));
+  },
+
+  toggleIAChatClient(checked) {
+    const current = this.getIAConfig();
+    current.enabled = checked;
+    localStorage.setItem('wes_ai_config', JSON.stringify(current));
+    window.dispatchEvent(new CustomEvent('wes_ai_config_updated', { detail: current }));
+    showToast(checked ? 'Asistente Virtual habilitado en página pública.' : 'Asistente Virtual pausado en página pública.', 'info');
+  },
+
+  async testIAConnection() {
+    const btn = document.getElementById('btn-ia-test-ping');
+    const originalHtml = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Probando...';
+
+    const config = this.getIAConfig();
+    const startTime = Date.now();
+
+    try {
+      if (config.provider === 'local' || !config.apiKey) {
+        await new Promise(r => setTimeout(r, 400));
+        showToast('Modo Autónomo Local WES activo y listo (sin API externa).', 'info');
+        return;
+      }
+
+      if (config.provider === 'gemini') {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-1.5-flash'}:generateContent?key=${config.apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: 'Responde únicamente con la palabra: CONECTADO' }] }]
+          })
+        });
+
+        const elapsed = Date.now() - startTime;
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+        }
+        showToast(`¡Conexión con Google Gemini EXITOSA! Latencia: ${elapsed} ms.`, 'success');
+      } else if (config.provider === 'openai') {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: config.model || 'gpt-4o-mini',
+            messages: [{ role: 'user', content: 'Responde: CONECTADO' }],
+            max_tokens: 5
+          })
+        });
+
+        const elapsed = Date.now() - startTime;
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+        }
+        showToast(`¡Conexión con OpenAI EXITOSA! Latencia: ${elapsed} ms.`, 'success');
+      }
+    } catch (err) {
+      showToast(`Error de conexión con IA: ${err.message}`, 'error');
+    } finally {
+      if (btn) btn.innerHTML = originalHtml;
+    }
+  },
+
+  async testIAPromptConsole() {
+    const input = document.getElementById('admin-ia-test-input');
+    const resultBox = document.getElementById('admin-ia-test-result');
+    const btn = document.getElementById('btn-ia-console-run');
+    if (!input || !input.value.trim() || !resultBox) return;
+
+    const query = input.value.trim();
+    const config = this.getIAConfig();
+    const originalBtn = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+
+    resultBox.classList.remove('hidden', 'bg-rose-50', 'border-rose-200', 'bg-emerald-50', 'border-emerald-200');
+    resultBox.classList.add('bg-slate-50', 'border-slate-200');
+    resultBox.innerHTML = '<span class="text-slate-500 font-mono"><i class="fas fa-spinner fa-spin mr-1"></i> Consultando modelo con System Prompt...</span>';
+
+    const startTime = Date.now();
+
+    try {
+      if (!config.apiKey) {
+        throw new Error('Debes configurar una clave de API primero en el formulario de la izquierda.');
+      }
+
+      let reply = '';
+      if (config.provider === 'gemini') {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-1.5-flash'}:generateContent?key=${config.apiKey}`;
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{
+              parts: [{ text: `${config.systemPrompt}\n\nPregunta de prueba del administrador: ${query}` }]
+            }],
+            generationConfig: {
+              maxOutputTokens: config.maxTokens || 350,
+              temperature: config.temperature || 0.7
+            }
+          })
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
+        reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Respuesta vacía';
+      } else if (config.provider === 'openai') {
+        const res = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: config.model || 'gpt-4o-mini',
+            messages: [
+              { role: 'system', content: config.systemPrompt },
+              { role: 'user', content: query }
+            ],
+            max_tokens: config.maxTokens || 350,
+            temperature: config.temperature || 0.7
+          })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
+        reply = data?.choices?.[0]?.message?.content || 'Respuesta vacía';
+      }
+
+      const elapsed = Date.now() - startTime;
+      resultBox.className = 'p-4 rounded-xl border bg-emerald-50 border-emerald-200 text-xs space-y-2';
+      resultBox.innerHTML = `
+        <div class="flex items-center justify-between border-b border-emerald-200 pb-1.5 text-[10px] text-emerald-900 font-bold uppercase tracking-wider">
+          <span class="flex items-center space-x-1"><i class="fas fa-check-circle text-emerald-600"></i><span>Respuesta de ${config.provider.toUpperCase()} (${config.model})</span></span>
+          <span class="font-mono">${elapsed} ms</span>
+        </div>
+        <div class="text-slate-800 leading-relaxed font-sans">${escapeHtml(reply).replace(/\n/g, '<br>')}</div>
+      `;
+    } catch (err) {
+      resultBox.className = 'p-4 rounded-xl border bg-rose-50 border-rose-200 text-xs text-rose-900 space-y-1';
+      resultBox.innerHTML = `
+        <div class="font-bold flex items-center space-x-1.5"><i class="fas fa-exclamation-triangle text-rose-600"></i><span>Error en la prueba:</span></div>
+        <div class="font-mono text-[11px]">${escapeHtml(err.message)}</div>
+      `;
+    } finally {
+      if (btn) btn.innerHTML = originalBtn;
+    }
   },
 
   handleCompanySettingsSave(e) {
