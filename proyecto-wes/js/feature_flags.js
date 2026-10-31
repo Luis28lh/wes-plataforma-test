@@ -12,7 +12,7 @@ const DEFAULT_FEATURE_FLAGS = {
   hideOutOfStock: false,
   showFounders: true,
   showMap: true,
-  showWhatsAppButton: true,
+  showWhatsAppButton: false,
   activeCategories: [
     "Cámaras de Seguridad",
     "CCTV y Cámaras",

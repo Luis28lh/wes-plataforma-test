@@ -72,8 +72,8 @@
     const wrapper = document.createElement('div');
     wrapper.id = 'wes-client-chat-wrapper';
     wrapper.innerHTML = `
-      <!-- Botón Flotante Lanzador (Ubicado justo arriba de WhatsApp) -->
-      <div id="wes-chat-launcher" class="fixed bottom-24 right-6 z-40 flex items-center group cursor-pointer" onclick="toggleClientChat()" title="Chatear con el Asistente WES">
+      <!-- Botón Flotante Lanzador (Esquina Inferior Derecha) -->
+      <div id="wes-chat-launcher" class="fixed bottom-6 right-6 z-40 flex items-center group cursor-pointer" onclick="toggleClientChat()" title="Chatear con el Asistente WES">
         <span class="hidden sm:inline-flex mr-2.5 px-3 py-1 bg-slate-900/90 text-wes-gold text-xs font-bold rounded-xl shadow-lg border border-wes-gold/40 backdrop-blur-xs transition group-hover:scale-105 pointer-events-none items-center space-x-1.5">
           <i class="fas fa-sparkles text-amber-400 text-[10px]"></i>
           <span>Asistente WES</span>
