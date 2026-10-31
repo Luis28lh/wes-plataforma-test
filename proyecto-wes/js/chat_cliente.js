@@ -295,6 +295,80 @@
     if (el) el.remove();
   }
 
+  const DEFAULT_SYSTEM_PROMPT = `Eres el Asistente Técnico y Asesor Comercial Oficial de Warn Electrical Services, SRL (WES). Atiendes a cada cliente en Moca y toda la República Dominicana con la misma calidez, seriedad, profesionalismo y vocación de servicio que el equipo fundador de la empresa (Luis Miguel Lizardo, Gerente General; Stephano Vásquez, Director de Ventas; y Yaneiry Díaz, Directora Administrativa).
+
+Tu misión es representar fielmente a Warn Electrical Services: escuchar con atención la necesidad del cliente, asesorarlo con dominio técnico en nuestras soluciones, resolver sus dudas con empatía y orientarlo para solicitar una cotización, programar una visita técnica o ingresar su equipo a nuestro taller.
+
+════════════════════════════════════════════════════════════════
+1. IDENTIDAD CORPORATIVA & DATOS DE CONTACTO DE WES
+════════════════════════════════════════════════════════════════
+- Nombre de la Empresa: Warn Electrical Services, SRL (conocida como WES).
+- Lema Corporativo: "Soluciones tecnológicas que protegen y conectan lo que más valoras."
+- Sede Principal: Moca, Provincia Espaillat, República Dominicana.
+- Cobertura Geográfica: Moca, Licey al Medio, Santiago, La Vega, Salcedo, San Francisco de Macorís y toda la región del Cibao (con capacidad para proyectos en todo el país).
+- Teléfono Oficial de Oficina: (809) 578-0000.
+- WhatsApp Directo de Ventas y Soporte: +1 (849) 207-5474 (enlace directo: https://wa.me/18492075474).
+- Horarios de Operación: Lunes a Viernes de 8:00 AM a 6:00 PM | Sábados de 8:00 AM a 1:00 PM.
+- Liderazgo de la Empresa:
+  * Luis Miguel Lizardo: Fundador & Gerente General (Dirección estratégica e ingeniería).
+  * Stephano Vásquez: Director de Ventas & Especialista en Servicio al Cliente (Atención personalizada).
+  * Yaneiry Díaz: Directora Administrativa & Operaciones (Gestión financiera y calidad).
+
+════════════════════════════════════════════════════════════════
+2. CATÁLOGO COMPLETO DE SERVICIOS Y ESPECIALIDADES TÉCNICAS
+════════════════════════════════════════════════════════════════
+A. AUTOMATIZACIÓN DE PORTONES ELÉCTRICOS (ESPECIALISTAS CAME):
+   - Distribuidores, instaladores y centro de servicio autorizado para motores italianos CAME.
+   - Portones Corredizos: Motores CAME BXV (BXV 400 kg para portones residenciales ligeros, BXV 600 kg y 800 kg para uso residencial continuo y condominios, y BXV 1000 kg para portones industriales pesados).
+   - Portones Batientes: Motores CAME Krono, ATI, Ferni y Fast (mecanismos de pistón electromecánico o brazo articulado para una o dos hojas).
+   - Repuestos y Accesorios Originales en Inventario: Cremalleras de acero galvanizado para soldar o atornillar, fotoceldas de seguridad infrarrojas anti-aplastamiento (modelos DIR10 y Delta), tarjetas electrónicas de control (ZBX7N, ZLJ24), receptores de radiofrecuencia AF43S, controles remotos CAME TOP y SPACE de código seguro (Rolling Code 433.92 MHz) y cerraduras eléctricas de piso o electroimanes.
+   - Servicios en Portones: Instalación desde cero, cambio de cremalleras desgastadas, reemplazo de finales de carrera, configuración de nuevos controles remotos, reparación de tarjetas quemadas por descargas eléctricas y mantenimiento preventivo.
+
+B. LABORATORIO DE REPARACIÓN DE INVERSORES Y ENERGÍA DE RESPALDO:
+   - Laboratorio técnico propio con banco de pruebas computarizado y personal especializado en electrónica de potencia.
+   - Marcas atendidas y reparadas: Trace Engineering, Magnum Energy, Outback Power, Schneider Electric, Xantrex, Trojan y Forza.
+   - Servicios de Laboratorio: Diagnóstico y reparación a nivel de tarjeta electrónica (cambio de transistores MOSFET de potencia, transformadores toroidales, relays de transferencia, diodos rectificadores, capacitores electrolíticos y ventiladores de enfriamiento forzado). Calibración precisa de voltaje de salida (120V/240V a 60 Hz) y corriente de carga.
+   - Bancos de Baterías: Venta, instalación y mantenimiento de baterías Forza AGM de 12V 4.5Ah, 7Ah, 9Ah y baterías de ciclo profundo Trojan y Rolls Surrette (6V y 12V) y litio LiFePO4. Pruebas de descarga computarizada para evaluar la vida útil real de las baterías del cliente.
+
+C. SEGURIDAD ELECTRÓNICA & CÁMARAS CCTV:
+   - Diseño, cableado, instalación y configuración de sistemas de videovigilancia de alta definición.
+   - Marcas líderes: Dahua Technology y Hikvision.
+   - Tecnologías disponibles: Cámaras bala y domo Full HD y 4K Ultra HD, tecnología ColorVu y Full-Color (visión nocturna a todo color 24/7 sin perder detalles), cámaras con micrófono integrado y audio bidireccional, y detección inteligente de personas y vehículos mediante Inteligencia Artificial.
+   - Grabadores y Almacenamiento: NVR y XVR de 4, 8, 16 y 32 canales con discos duros púrpura de grado videovigilancia continua (WD Purple).
+   - Visualización Móvil: Configuración completa en los teléfonos del cliente (Android y iPhone) mediante la app DMSS sin mensualidades ni cargos ocultos.
+
+D. CONTROL DE ACCESO, CITOFONÍA Y ELECTRICIDAD GENERAL:
+   - Terminales biométricas de reconocimiento facial, huella dactilar y tarjetas de proximidad marca ZKTeco para control de personal y seguridad de condominios.
+   - Cerraduras magnéticas (electroimanes) de 600 lbs y 1200 lbs con botón de salida No-Touch (sin contacto).
+   - Videoporteros Dahua residenciales con cámara integrada y botón de apertura remota.
+   - Cableado estructurado Cat6 100% cobre para redes de datos y cámaras IP.
+   - Instalaciones eléctricas: Tableros de breakers, balanceo de cargas, interruptores de transferencia automática (ATS) para conmutación transparente entre CDEEE / EDE y planta eléctrica o inversor, y sistemas de puesta a tierra.
+
+E. TALLER DE SERVICIO Y TABLERO KDS DE TICKETS:
+   - Todo equipo que entra a nuestro taller recibe un ticket formal numerado (código SRV-YYYY-XXXX).
+   - Diagnóstico técnico en 24 a 48 horas con presupuesto detallado antes de proceder.
+   - El cliente puede consultar el estado de su ticket en cualquier momento desde esta web.
+   - Garantía por escrito en repuestos y mano de obra.
+
+════════════════════════════════════════════════════════════════
+3. REGLAS DE ATENCIÓN Y COMPORTAMIENTO (COMO SI FUERAS EL DUEÑO)
+════════════════════════════════════════════════════════════════
+1. Habla en Primera Persona del Plural: Habla como miembro activo de Warn Electrical Services ("En WES le ofrecemos...", "Con gusto le coordinamos una visita...", "Nuestros técnicos en Moca...", "Para nosotros es un honor servirle...").
+2. Calidez y Cortesía Dominicana: Saluda de forma entusiasta, respetuosa y profesional. Muestra disposición genuina de ayudar al cliente en todo momento.
+3. Si el cliente pregunta "¿En qué me puede ayudar?", "¿Qué hacen?" o hace una consulta general:
+   - Dale una bienvenida cordial y afectuosa a Warn Electrical Services (WES).
+   - Explícale de forma ordenada y atractiva nuestras 4 soluciones clave (Motores CAME para portones, Taller de reparación de inversores y baterías, Cámaras de seguridad CCTV, y Controles de acceso/electricidad).
+   - Hazle una pregunta de cierre cordial para conocer su caso: "¿Tiene en mente algún proyecto en particular o requiere asistencia técnica para algún equipo en su hogar o negocio?".
+4. Precios y Cotizaciones:
+   - Nunca inventes un precio cerrado sin conocer los datos del proyecto.
+   - Explica con transparencia que en WES cada instalación se calcula a la medida para garantizar que el equipo sea el adecuado y dure muchos años (por ejemplo: el motor depende del peso y uso del portón; las cámaras, de la cantidad de áreas y distancias; los inversores, de la carga eléctrica).
+   - Invítalo amablemente a cotizar sin costo ni compromiso enviándonos fotos o detalles a nuestro WhatsApp (849) 207-5474 o solicitando una visita técnica en sitio.
+5. Reporte de Averías o Reparaciones:
+   - Si el cliente dice que un motor, inversor o cámara no funciona, escúchalo con empatía, pídele detalles del síntoma (marca, modelo, qué hace o qué no hace) y dile que con gusto nuestros técnicos en Moca pueden revisarlo a fondo en nuestro laboratorio o agendar una revisión en su domicilio.
+6. Formato de Respuesta:
+   - Estructura las respuestas con viñetas limpias, buena puntuación y emojis sobrios y profesionales.
+   - Entrega SIEMPRE respuestas completas, fluidas y bien redactadas. Jamás cortes una respuesta a la mitad.`;
+
   async function queryAIBackend(userMessage) {
     // 1. Obtener configuración de IA guardada por el administrador en wes_ai_config (Taller 3)
     let aiConfig = null;
@@ -314,15 +388,18 @@
     if (aiConfig && aiConfig.apiKey && aiConfig.apiKey.length > 5) {
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout Taller 3
+        const timeoutId = setTimeout(() => controller.abort(), 14000); // 14s timeout
         const provider = aiConfig.provider || 'gemini';
         let preferredModel = aiConfig.model || (provider === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini');
-        if (preferredModel === 'gemini-1.5-flash' || preferredModel === 'gemini-2.5-flash') {
+        if (preferredModel === 'gemini-1.5-flash' || preferredModel === 'gemini-2.5-flash' || preferredModel === 'gemini-3.8-flash') {
           preferredModel = 'gemini-2.0-flash';
         }
-        const systemPrompt = aiConfig.systemPrompt || 'Eres el Asistente Técnico Virtual de Warn Electrical Services (WES) en Moca, República Dominicana. Responde en español de forma cordial, profesional y concisa.';
+
+        // Si el prompt guardado es breve o versión vieja, usar el prompt empresarial 3.0
+        const rawPrompt = aiConfig.systemPrompt || '';
+        const systemPrompt = (rawPrompt.length > 500) ? rawPrompt : DEFAULT_SYSTEM_PROMPT;
         const temperature = aiConfig.temperature !== undefined ? Number(aiConfig.temperature) : 0.7;
-        const maxTokens = aiConfig.maxTokens ? Number(aiConfig.maxTokens) : 350;
+        const maxTokens = Math.max(Number(aiConfig.maxTokens) || 800, 800);
 
         let reply = '';
 
@@ -340,12 +417,18 @@
           for (const candidate of candidateModels) {
             try {
               const url = `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${aiConfig.apiKey}`;
-              const res = await fetch(url, {
+              
+              // Intentar primero con systemInstruction oficial de Gemini
+              let res = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                  systemInstruction: {
+                    parts: [{ text: systemPrompt }]
+                  },
                   contents: [{
-                    parts: [{ text: `${systemPrompt}\n\nPregunta del cliente: ${userMessage}` }]
+                    role: 'user',
+                    parts: [{ text: userMessage }]
                   }],
                   generationConfig: {
                     maxOutputTokens: maxTokens,
@@ -355,10 +438,32 @@
                 signal: controller.signal
               });
 
+              // Si falla por payload systemInstruction, reintentar con contents unificado
+              if (!res.ok) {
+                res = await fetch(url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    contents: [{
+                      parts: [{ text: `[INSTRUCCIONES DEL SISTEMA DE WES]\n${systemPrompt}\n\n[CONSULTA DEL CLIENTE]\n${userMessage}` }]
+                    }],
+                    generationConfig: {
+                      maxOutputTokens: maxTokens,
+                      temperature: temperature
+                    }
+                  }),
+                  signal: controller.signal
+                });
+              }
+
               if (res.ok) {
                 const data = await res.json();
-                reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (reply && reply.trim()) {
+                const candidateObj = data?.candidates?.[0];
+                const parts = candidateObj?.content?.parts || [];
+                // Concatenar TODAS las partes para evitar truncamiento
+                reply = parts.map(p => (p && typeof p.text === 'string' ? p.text : '')).join('').trim();
+                
+                if (reply) {
                   if (candidate !== aiConfig.model) {
                     aiConfig.model = candidate;
                     try { localStorage.setItem('wes_ai_config', JSON.stringify(aiConfig)); } catch (e) {}
@@ -394,7 +499,7 @@
           clearTimeout(timeoutId);
           if (res.ok) {
             const data = await res.json();
-            reply = data?.choices?.[0]?.message?.content;
+            reply = data?.choices?.[0]?.message?.content || '';
           }
         }
 
@@ -825,18 +930,47 @@
       return;
     }
 
-    // Respuesta general inteligente por defecto
+    // Respuesta general inteligente y corporativa por defecto de WES
     appendBotMessage(`
-      <p class="text-slate-800 mb-1.5">Gracias por escribirnos. Con respecto a tu consulta: <em>"${escapeHtml(query)}"</em></p>
-      <p class="text-slate-600 mb-2">Para darte una respuesta exacta o cotización inmediata, puedes elegir una de las opciones rápidas abajo o comunicarte directamente con nuestro equipo de atención:</p>
-      <div class="pt-1 flex flex-wrap gap-2">
-        <a href="${WES_KB.empresa.whatsappUrl}?text=${encodeURIComponent(`Hola WES, tengo una consulta: ${query}`)}" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition inline-flex items-center space-x-1 shadow-xs">
-          <i class="fab fa-whatsapp"></i>
-          <span>Preguntar por WhatsApp</span>
-        </a>
-        <button type="button" onclick="startServiceRequestFlow()" class="px-3 py-1.5 bg-wes-blue hover:bg-wes-dark text-white rounded-xl font-bold text-xs transition border border-wes-gold/40">
-          <i class="fas fa-tools text-wes-gold mr-1"></i> Abrir Solicitud
-        </button>
+      <div class="space-y-3">
+        <div class="p-3 bg-blue-50/80 border border-blue-200 rounded-2xl text-xs space-y-2">
+          <p class="font-bold text-slate-900">
+            ¡Hola! Es un placer saludarle de parte de <strong>Warn Electrical Services, SRL (WES)</strong> en Moca.
+          </p>
+          <p class="text-slate-600 leading-relaxed">
+            Somos especialistas líderes en automatización, seguridad electrónica y energía ininterrumpida para hogares, fincas y empresas en todo el Cibao. Estamos para servirle en:
+          </p>
+          <div class="space-y-1.5 pt-1 text-slate-800">
+            <div class="flex items-start space-x-2">
+              <i class="fas fa-door-open text-amber-500 mt-0.5 shrink-0"></i>
+              <div><strong>Motores para Portones CAME:</strong> Instalación, repuestos (cremalleras, fotoceldas, controles) y reparación de modelos corredizos BXV (400kg a 1000kg) y batientes.</div>
+            </div>
+            <div class="flex items-start space-x-2">
+              <i class="fas fa-car-battery text-emerald-600 mt-0.5 shrink-0"></i>
+              <div><strong>Laboratorio de Inversores & Baterías:</strong> Reparación de tarjetas electrónicas Trace, Magnum y Outback, además de bancos de baterías Forza AGM, Trojan y Litio.</div>
+            </div>
+            <div class="flex items-start space-x-2">
+              <i class="fas fa-video text-blue-600 mt-0.5 shrink-0"></i>
+              <div><strong>Cámaras de Seguridad CCTV:</strong> Sistemas Dahua y Hikvision con visión a color nocturna ColorVu y monitoreo en vivo en tu celular con app DMSS.</div>
+            </div>
+            <div class="flex items-start space-x-2">
+              <i class="fas fa-tools text-purple-600 mt-0.5 shrink-0"></i>
+              <div><strong>Taller Técnico y Diagnóstico:</strong> Recepción con ticket formal SRV en 24 a 48 horas y garantía formal por escrito.</div>
+            </div>
+          </div>
+        </div>
+        <p class="text-slate-600 text-xs">
+          ¿En cuál de estas soluciones podemos asistirle hoy? Puede escribirnos su consulta directamente o contactar a uno de nuestros asesores:
+        </p>
+        <div class="pt-1 flex flex-wrap gap-2">
+          <a href="${WES_KB.empresa.whatsappUrl}?text=${encodeURIComponent(`Hola WES, estoy en la página web y quisiera una cotización/asesoría sobre: ${query}`)}" target="_blank" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition inline-flex items-center space-x-1.5 shadow-xs">
+            <i class="fab fa-whatsapp text-sm"></i>
+            <span>Hablar con un Asesor al (849) 207-5474</span>
+          </a>
+          <button type="button" onclick="startServiceRequestFlow()" class="px-3.5 py-2 bg-wes-blue hover:bg-wes-dark text-white rounded-xl font-bold text-xs transition border border-wes-gold/40">
+            <i class="fas fa-tools text-wes-gold mr-1"></i> Abrir Solicitud Técnica
+          </button>
+        </div>
       </div>
     `);
   }
