@@ -254,6 +254,56 @@
     scrollToBottom();
   }
 
+  function appendTypingIndicator() {
+    const msgContainer = document.getElementById('wes-chat-messages');
+    if (!msgContainer) return null;
+
+    const div = document.createElement('div');
+    div.id = 'wes-chat-typing';
+    div.className = 'flex items-start space-x-2 animate-fadeIn';
+    div.innerHTML = `
+      <div class="w-7 h-7 rounded-full bg-wes-blue text-wes-gold flex items-center justify-center text-xs shrink-0 mt-0.5 shadow-xs">
+        <i class="fas fa-robot animate-pulse"></i>
+      </div>
+      <div class="bg-white px-3.5 py-2.5 rounded-2xl rounded-tl-none border border-slate-200/90 shadow-xs text-slate-500 text-xs flex items-center space-x-1.5">
+        <span class="w-1.5 h-1.5 bg-wes-gold rounded-full animate-bounce"></span>
+        <span class="w-1.5 h-1.5 bg-wes-gold rounded-full animate-bounce [animation-delay:0.15s]"></span>
+        <span class="w-1.5 h-1.5 bg-wes-gold rounded-full animate-bounce [animation-delay:0.3s]"></span>
+        <span class="ml-1 text-[11px] text-slate-500 font-medium">Asistente WES consultando...</span>
+      </div>
+    `;
+    msgContainer.appendChild(div);
+    scrollToBottom();
+    return div;
+  }
+
+  function removeTypingIndicator() {
+    const el = document.getElementById('wes-chat-typing');
+    if (el) el.remove();
+  }
+
+  async function queryAIBackend(userMessage) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout Taller 3
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: userMessage }),
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      if (!res.ok) return null;
+      const data = await res.json();
+      if (data && data.ok && data.reply) {
+        return data;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
   // Manejar clics de los chips de sugerencia rápida
   function handleQuickChipClick(topic) {
     if (topic === 'ticket') {
@@ -536,7 +586,7 @@
   }
 
   // Procesamiento principal de mensajes enviados por el usuario
-  function handleChatSubmit(e) {
+  async function handleChatSubmit(e) {
     if (e && e.preventDefault) e.preventDefault();
     const input = document.getElementById('wes-chat-user-input');
     if (!input || !input.value.trim()) return;
@@ -619,6 +669,35 @@
     // 10. Solicitud de nuevo servicio o reparación
     if (/(reparar|arreglar|falla|dañado|no prende|no abre|mantenimiento|servicio)/i.test(lower)) {
       startServiceRequestFlow();
+      return;
+    }
+
+    // Consultar al backend de IA (Cloudflare Pages Function /api/chat)
+    appendTypingIndicator();
+    const aiResult = await queryAIBackend(query);
+    removeTypingIndicator();
+
+    if (aiResult && aiResult.ok && aiResult.reply) {
+      appendBotMessage(`
+        <div class="space-y-2">
+          <div class="flex items-center space-x-1.5 text-[10px] text-amber-700 font-bold uppercase tracking-wider mb-1">
+            <i class="fas fa-sparkles text-amber-500"></i>
+            <span>Respuesta Asistente WES IA</span>
+          </div>
+          <div class="leading-relaxed text-slate-800">
+            ${escapeHtml(aiResult.reply).replace(/\n\n/g, '<br><br>').replace(/\n/g, '<br>')}
+          </div>
+          <div class="pt-2 border-t border-slate-100 flex flex-wrap gap-2">
+            <a href="${WES_KB.empresa.whatsappUrl}?text=${encodeURIComponent(`Hola WES, el asistente virtual me sugirió: ${aiResult.reply.substring(0, 100)}...`)}" target="_blank" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition inline-flex items-center space-x-1 shadow-xs">
+              <i class="fab fa-whatsapp"></i>
+              <span>Hablar con un Asesor</span>
+            </a>
+            <button type="button" onclick="startServiceRequestFlow()" class="px-3 py-1.5 bg-wes-blue hover:bg-wes-dark text-white rounded-xl font-bold text-xs transition border border-wes-gold/40">
+              <i class="fas fa-tools text-wes-gold mr-1"></i> Abrir Solicitud
+            </button>
+          </div>
+        </div>
+      `);
       return;
     }
 
