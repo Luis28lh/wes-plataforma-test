@@ -316,7 +316,8 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout Taller 3
         const provider = aiConfig.provider || 'gemini';
-        const model = aiConfig.model || (provider === 'gemini' ? 'gemini-1.5-flash' : 'gpt-4o-mini');
+        let model = aiConfig.model || (provider === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini');
+        if (model === 'gemini-1.5-flash') model = 'gemini-2.0-flash';
         const systemPrompt = aiConfig.systemPrompt || 'Eres el Asistente Técnico Virtual de Warn Electrical Services (WES) en Moca, República Dominicana. Responde en español de forma cordial, profesional y concisa.';
         const temperature = aiConfig.temperature !== undefined ? Number(aiConfig.temperature) : 0.7;
         const maxTokens = aiConfig.maxTokens ? Number(aiConfig.maxTokens) : 350;
@@ -324,8 +325,8 @@
         let reply = '';
 
         if (provider === 'gemini') {
-          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiConfig.apiKey}`;
-          const res = await fetch(url, {
+          let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiConfig.apiKey}`;
+          let res = await fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -339,6 +340,42 @@
             }),
             signal: controller.signal
           });
+
+          // Si el modelo específico arrojó error 404 / no encontrado, auto-detectar modelo activo
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            const errMsg = errData?.error?.message || '';
+            if (errMsg.includes('not found') || errMsg.includes('not supported') || res.status === 404) {
+              const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${aiConfig.apiKey}`);
+              if (listRes.ok) {
+                const listData = await listRes.json();
+                const available = (listData.models || [])
+                  .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+                  .map(m => m.name.replace(/^models\//, ''));
+                const fallback = available.find(m => m.includes('2.0-flash') || m.includes('1.5-flash') || m.includes('flash')) || available[0];
+                if (fallback && fallback !== model) {
+                  model = fallback;
+                  aiConfig.model = fallback;
+                  try { localStorage.setItem('wes_ai_config', JSON.stringify(aiConfig)); } catch (e) {}
+                  url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiConfig.apiKey}`;
+                  res = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      contents: [{
+                        parts: [{ text: `${systemPrompt}\n\nPregunta del cliente: ${userMessage}` }]
+                      }],
+                      generationConfig: {
+                        maxOutputTokens: maxTokens,
+                        temperature: temperature
+                      }
+                    })
+                  });
+                }
+              }
+            }
+          }
+
           clearTimeout(timeoutId);
           if (res.ok) {
             const data = await res.json();

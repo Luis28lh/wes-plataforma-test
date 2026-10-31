@@ -2889,11 +2889,15 @@ Reglas de respuesta:
     if (stored) {
       try {
         const parsed = JSON.parse(stored);
+        let currentModel = parsed.model || 'gemini-2.0-flash';
+        if (currentModel === 'gemini-1.5-flash') {
+          currentModel = 'gemini-2.0-flash';
+        }
         return {
           enabled: parsed.enabled !== false,
           provider: parsed.provider || 'gemini',
           apiKey: parsed.apiKey || '',
-          model: parsed.model || 'gemini-1.5-flash',
+          model: currentModel,
           temperature: parsed.temperature !== undefined ? parsed.temperature : 0.7,
           maxTokens: parsed.maxTokens || 350,
           promptVersion: parsed.promptVersion || '2.0 - Taller 3',
@@ -2906,7 +2910,7 @@ Reglas de respuesta:
       enabled: true,
       provider: 'gemini',
       apiKey: '',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       temperature: 0.7,
       maxTokens: 350,
       promptVersion: '2.0 - Taller 3',
@@ -2996,8 +3000,21 @@ Reglas de respuesta:
               </div>
 
               <div>
-                <label class="block text-xs font-bold text-slate-700 mb-1">Modelo Seleccionado</label>
-                <input type="text" id="admin-ia-model" name="model" value="${escapeHtml(config.model)}" placeholder="gemini-1.5-flash" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
+                <div class="flex items-center justify-between mb-1">
+                  <label class="block text-xs font-bold text-slate-700">Modelo Seleccionado</label>
+                  <button type="button" onclick="AdminApp.autoDetectModels()" id="btn-auto-detect-models" class="text-[11px] text-wes-blue hover:underline font-semibold flex items-center space-x-1">
+                    <i class="fas fa-magic text-xs text-amber-500 mr-1"></i>
+                    <span>Auto-detectar Modelos</span>
+                  </button>
+                </div>
+                <input type="text" id="admin-ia-model" name="model" value="${escapeHtml(config.model)}" placeholder="gemini-2.0-flash o gemini-1.5-flash-latest" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
+                <div id="ia-detected-models-container" class="mt-1.5 hidden"></div>
+                <div class="flex flex-wrap items-center gap-1 mt-1.5 text-[10px]">
+                  <span class="text-slate-400 font-medium">Sugeridos:</span>
+                  <button type="button" onclick="document.getElementById('admin-ia-model').value='gemini-2.0-flash'" class="px-1.5 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 rounded font-mono transition">gemini-2.0-flash</button>
+                  <button type="button" onclick="document.getElementById('admin-ia-model').value='gemini-1.5-flash-latest'" class="px-1.5 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 rounded font-mono transition">gemini-1.5-flash-latest</button>
+                  <button type="button" onclick="document.getElementById('admin-ia-model').value='gemini-2.5-flash'" class="px-1.5 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 rounded font-mono transition">gemini-2.5-flash</button>
+                </div>
               </div>
 
               <!-- Parámetros del Modelo (Taller 3) -->
@@ -3158,11 +3175,100 @@ Reglas de respuesta:
     const modelInput = document.getElementById('admin-ia-model');
     if (!modelInput) return;
     if (provider === 'gemini') {
-      modelInput.value = 'gemini-1.5-flash';
+      modelInput.value = 'gemini-2.0-flash';
     } else if (provider === 'openai') {
       modelInput.value = 'gpt-4o-mini';
     } else if (provider === 'local') {
       modelInput.value = 'wes-local-rules';
+    }
+  },
+
+  async fetchWorkingGeminiModel(apiKey, preferredModel) {
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+      if (!res.ok) return preferredModel || 'gemini-2.0-flash';
+      const data = await res.json();
+      const available = (data.models || [])
+        .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+
+      if (available.length === 0) return preferredModel || 'gemini-2.0-flash';
+      if (preferredModel && available.includes(preferredModel)) return preferredModel;
+
+      const candidates = ['gemini-2.0-flash', 'gemini-1.5-flash-latest', 'gemini-2.5-flash', 'gemini-1.5-flash-8b', 'gemini-1.5-pro-latest', 'gemini-pro'];
+      for (const c of candidates) {
+        if (available.includes(c)) return c;
+      }
+      const anyFlash = available.find(m => m.includes('flash'));
+      if (anyFlash) return anyFlash;
+
+      return available[0];
+    } catch (e) {
+      return preferredModel || 'gemini-2.0-flash';
+    }
+  },
+
+  async autoDetectModels() {
+    const key = document.getElementById('admin-ia-key')?.value.trim();
+    const provider = document.getElementById('admin-ia-provider')?.value || 'gemini';
+    const btn = document.getElementById('btn-auto-detect-models');
+    const container = document.getElementById('ia-detected-models-container');
+
+    if (!key) {
+      showToast('Ingresa tu clave de API primero para consultar los modelos.', 'warning');
+      return;
+    }
+
+    if (provider !== 'gemini') {
+      showToast('Para OpenAI puedes usar: gpt-4o-mini o gpt-4o.', 'info');
+      return;
+    }
+
+    const originalText = btn ? btn.innerHTML : '';
+    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Detectando...';
+
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err?.error?.message || `Error HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      const available = (data.models || [])
+        .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+        .map(m => m.name.replace(/^models\//, ''));
+
+      if (available.length === 0) {
+        throw new Error('No se encontraron modelos con soporte generateContent.');
+      }
+
+      const best = available.find(m => m.includes('2.0-flash') || m.includes('1.5-flash') || m.includes('flash')) || available[0];
+      const modelInput = document.getElementById('admin-ia-model');
+      if (modelInput) {
+        modelInput.value = best;
+      }
+
+      if (container) {
+        container.classList.remove('hidden');
+        container.innerHTML = `
+          <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span class="text-[10px] font-bold text-slate-600 uppercase block">Modelos activos en tu clave (haz clic para usar):</span>
+            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pt-0.5">
+              ${available.map(m => `
+                <button type="button" onclick="document.getElementById('admin-ia-model').value = '${m}'; showToast('Modelo seleccionado: ${m}', 'info');" class="px-2 py-0.5 bg-white hover:bg-amber-100 border border-slate-200 text-slate-700 rounded-md text-[10px] font-mono transition">
+                  ${m}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }
+
+      showToast(`¡${available.length} modelos detectados! Seleccionado: ${best}`, 'success');
+    } catch (e) {
+      showToast(`Error al consultar modelos: ${e.message}`, 'error');
+    } finally {
+      if (btn) btn.innerHTML = originalText;
     }
   },
 
@@ -3233,17 +3339,28 @@ Reglas de respuesta:
     if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Probando...';
 
     const config = this.getIAConfig();
+    const apiKey = document.getElementById('admin-ia-key')?.value.trim() || config.apiKey;
+    const provider = document.getElementById('admin-ia-provider')?.value || config.provider;
+    let model = document.getElementById('admin-ia-model')?.value.trim() || config.model;
+
     const startTime = Date.now();
 
     try {
-      if (config.provider === 'local' || !config.apiKey) {
+      if (provider === 'local' || !apiKey) {
         await new Promise(r => setTimeout(r, 400));
         showToast('Modo Autónomo Local WES activo y listo (sin API externa).', 'info');
         return;
       }
 
-      if (config.provider === 'gemini') {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-1.5-flash'}:generateContent?key=${config.apiKey}`;
+      if (provider === 'gemini') {
+        // Resolver y validar modelo activo
+        model = await this.fetchWorkingGeminiModel(apiKey, model);
+        const modelInput = document.getElementById('admin-ia-model');
+        if (modelInput && modelInput.value !== model) {
+          modelInput.value = model;
+        }
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
         const res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -3257,16 +3374,16 @@ Reglas de respuesta:
           const errData = await res.json().catch(() => ({}));
           throw new Error(errData?.error?.message || `HTTP ${res.status}`);
         }
-        showToast(`¡Conexión con Google Gemini EXITOSA! Latencia: ${elapsed} ms.`, 'success');
-      } else if (config.provider === 'openai') {
+        showToast(`¡Conexión con Google Gemini EXITOSA! (${model}) - Latencia: ${elapsed} ms.`, 'success');
+      } else if (provider === 'openai') {
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
+            'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: config.model || 'gpt-4o-mini',
+            model: model || 'gpt-4o-mini',
             messages: [{ role: 'user', content: 'Responde: CONECTADO' }],
             max_tokens: 5
           })
@@ -3294,6 +3411,13 @@ Reglas de respuesta:
 
     const query = input.value.trim();
     const config = this.getIAConfig();
+    const apiKey = document.getElementById('admin-ia-key')?.value.trim() || config.apiKey;
+    const provider = document.getElementById('admin-ia-provider')?.value || config.provider;
+    let model = document.getElementById('admin-ia-model')?.value.trim() || config.model;
+    const prompt = document.getElementById('admin-ia-system-prompt')?.value.trim() || config.systemPrompt;
+    const temp = parseFloat(document.getElementById('admin-ia-temp')?.value) || config.temperature;
+    const tokens = parseInt(document.getElementById('admin-ia-tokens')?.value, 10) || config.maxTokens;
+
     const originalBtn = btn ? btn.innerHTML : '';
     if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
 
@@ -3304,45 +3428,94 @@ Reglas de respuesta:
     const startTime = Date.now();
 
     try {
-      if (!config.apiKey) {
+      if (!apiKey) {
         throw new Error('Debes configurar una clave de API primero en el formulario de la izquierda.');
       }
 
       let reply = '';
-      if (config.provider === 'gemini') {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${config.model || 'gemini-1.5-flash'}:generateContent?key=${config.apiKey}`;
-        const res = await fetch(url, {
+      if (provider === 'gemini') {
+        // Resolver y validar modelo activo
+        model = await this.fetchWorkingGeminiModel(apiKey, model);
+        const modelInput = document.getElementById('admin-ia-model');
+        if (modelInput && modelInput.value !== model) {
+          modelInput.value = model;
+        }
+
+        let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+        let res = await fetch(url, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             contents: [{
-              parts: [{ text: `${config.systemPrompt}\n\nPregunta de prueba del administrador: ${query}` }]
+              parts: [{ text: `${prompt}\n\nPregunta de prueba del administrador: ${query}` }]
             }],
             generationConfig: {
-              maxOutputTokens: config.maxTokens || 350,
-              temperature: config.temperature || 0.7
+              maxOutputTokens: tokens,
+              temperature: temp
             }
           })
         });
 
+        // Si falló por modelo, auto-detectar de inmediato
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData?.error?.message || '';
+          if (errMsg.includes('not found') || errMsg.includes('not supported') || res.status === 404) {
+            const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`);
+            if (listRes.ok) {
+              const listData = await listRes.json();
+              const available = (listData.models || [])
+                .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
+                .map(m => m.name.replace(/^models\//, ''));
+              const fallback = available.find(m => m.includes('flash')) || available[0];
+              if (fallback && fallback !== model) {
+                model = fallback;
+                if (modelInput) modelInput.value = model;
+                url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+                res = await fetch(url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    contents: [{
+                      parts: [{ text: `${prompt}\n\nPregunta de prueba del administrador: ${query}` }]
+                    }],
+                    generationConfig: {
+                      maxOutputTokens: tokens,
+                      temperature: temp
+                    }
+                  })
+                });
+              }
+            }
+          }
+          if (!res.ok) {
+            const finalErr = await res.json().catch(() => ({}));
+            throw new Error(finalErr?.error?.message || errMsg || `HTTP ${res.status}`);
+          }
+        }
+
         const data = await res.json();
-        if (!res.ok) throw new Error(data?.error?.message || `HTTP ${res.status}`);
         reply = data?.candidates?.[0]?.content?.parts?.[0]?.text || 'Respuesta vacía';
-      } else if (config.provider === 'openai') {
+
+        // Guardar automáticamente el modelo funcional en la configuración local
+        const currentSaved = this.getIAConfig();
+        currentSaved.model = model;
+        localStorage.setItem('wes_ai_config', JSON.stringify(currentSaved));
+      } else if (provider === 'openai') {
         const res = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${config.apiKey}`
+            'Authorization': `Bearer ${apiKey}`
           },
           body: JSON.stringify({
-            model: config.model || 'gpt-4o-mini',
+            model: model || 'gpt-4o-mini',
             messages: [
-              { role: 'system', content: config.systemPrompt },
+              { role: 'system', content: prompt },
               { role: 'user', content: query }
             ],
-            max_tokens: config.maxTokens || 350,
-            temperature: config.temperature || 0.7
+            max_tokens: tokens,
+            temperature: temp
           })
         });
         const data = await res.json();
@@ -3354,7 +3527,7 @@ Reglas de respuesta:
       resultBox.className = 'p-4 rounded-xl border bg-emerald-50 border-emerald-200 text-xs space-y-2';
       resultBox.innerHTML = `
         <div class="flex items-center justify-between border-b border-emerald-200 pb-1.5 text-[10px] text-emerald-900 font-bold uppercase tracking-wider">
-          <span class="flex items-center space-x-1"><i class="fas fa-check-circle text-emerald-600"></i><span>Respuesta de ${config.provider.toUpperCase()} (${config.model})</span></span>
+          <span class="flex items-center space-x-1"><i class="fas fa-check-circle text-emerald-600"></i><span>Respuesta de ${provider.toUpperCase()} (${model})</span></span>
           <span class="font-mono">${elapsed} ms</span>
         </div>
         <div class="text-slate-800 leading-relaxed font-sans">${escapeHtml(reply).replace(/\n/g, '<br>')}</div>
@@ -3363,7 +3536,7 @@ Reglas de respuesta:
       resultBox.className = 'p-4 rounded-xl border bg-rose-50 border-rose-200 text-xs text-rose-900 space-y-1';
       resultBox.innerHTML = `
         <div class="font-bold flex items-center space-x-1.5"><i class="fas fa-exclamation-triangle text-rose-600"></i><span>Error en la prueba:</span></div>
-        <div class="font-mono text-[11px]">${escapeHtml(err.message)}</div>
+        <div class="font-mono text-[11px] leading-relaxed">${escapeHtml(err.message)}</div>
       `;
     } finally {
       if (btn) btn.innerHTML = originalBtn;
