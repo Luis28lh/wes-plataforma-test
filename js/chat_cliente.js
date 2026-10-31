@@ -316,8 +316,10 @@
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 12000); // 12s timeout Taller 3
         const provider = aiConfig.provider || 'gemini';
-        let model = aiConfig.model || (provider === 'gemini' ? 'gemini-3.8-flash' : 'gpt-4o-mini');
-        if (model === 'gemini-1.5-flash' || model === 'gemini-2.0-flash' || model === 'gemini-2.5-flash') model = 'gemini-3.8-flash';
+        let preferredModel = aiConfig.model || (provider === 'gemini' ? 'gemini-2.0-flash' : 'gpt-4o-mini');
+        if (preferredModel === 'gemini-1.5-flash' || preferredModel === 'gemini-2.5-flash') {
+          preferredModel = 'gemini-2.0-flash';
+        }
         const systemPrompt = aiConfig.systemPrompt || 'Eres el Asistente Técnico Virtual de Warn Electrical Services (WES) en Moca, República Dominicana. Responde en español de forma cordial, profesional y concisa.';
         const temperature = aiConfig.temperature !== undefined ? Number(aiConfig.temperature) : 0.7;
         const maxTokens = aiConfig.maxTokens ? Number(aiConfig.maxTokens) : 350;
@@ -325,62 +327,52 @@
         let reply = '';
 
         if (provider === 'gemini') {
-          let url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiConfig.apiKey}`;
-          let res = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{
-                parts: [{ text: `${systemPrompt}\n\nPregunta del cliente: ${userMessage}` }]
-              }],
-              generationConfig: {
-                maxOutputTokens: maxTokens,
-                temperature: temperature
-              }
-            }),
-            signal: controller.signal
-          });
+          const candidateModels = [
+            preferredModel,
+            'gemini-2.0-flash',
+            'gemini-2.0-flash-lite',
+            'gemini-1.5-flash-latest',
+            'gemini-3.5-flash',
+            'gemini-2.0-flash-exp',
+            'gemini-3.8-flash'
+          ].filter((val, idx, self) => val && self.indexOf(val) === idx);
 
-          // Si el modelo específico arrojó error 404 / no encontrado / no longer available, auto-detectar modelo activo
-          if (!res.ok) {
-            const errData = await res.json().catch(() => ({}));
-            const errMsg = errData?.error?.message || '';
-            if (errMsg.includes('not found') || errMsg.includes('not supported') || errMsg.includes('no longer available') || res.status === 404) {
-              const listRes = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${aiConfig.apiKey}`);
-              if (listRes.ok) {
-                const listData = await listRes.json();
-                const available = (listData.models || [])
-                  .filter(m => m.supportedGenerationMethods && m.supportedGenerationMethods.includes('generateContent'))
-                  .map(m => m.name.replace(/^models\//, ''));
-                const fallback = available.find(m => m.includes('3.8-flash') || m.includes('3.5-flash') || m.includes('flash')) || available[0];
-                if (fallback && fallback !== model) {
-                  model = fallback;
-                  aiConfig.model = fallback;
-                  try { localStorage.setItem('wes_ai_config', JSON.stringify(aiConfig)); } catch (e) {}
-                  url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${aiConfig.apiKey}`;
-                  res = await fetch(url, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                      contents: [{
-                        parts: [{ text: `${systemPrompt}\n\nPregunta del cliente: ${userMessage}` }]
-                      }],
-                      generationConfig: {
-                        maxOutputTokens: maxTokens,
-                        temperature: temperature
-                      }
-                    })
-                  });
+          for (const candidate of candidateModels) {
+            try {
+              const url = `https://generativelanguage.googleapis.com/v1beta/models/${candidate}:generateContent?key=${aiConfig.apiKey}`;
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  contents: [{
+                    parts: [{ text: `${systemPrompt}\n\nPregunta del cliente: ${userMessage}` }]
+                  }],
+                  generationConfig: {
+                    maxOutputTokens: maxTokens,
+                    temperature: temperature
+                  }
+                }),
+                signal: controller.signal
+              });
+
+              if (res.ok) {
+                const data = await res.json();
+                reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (reply && reply.trim()) {
+                  if (candidate !== aiConfig.model) {
+                    aiConfig.model = candidate;
+                    try { localStorage.setItem('wes_ai_config', JSON.stringify(aiConfig)); } catch (e) {}
+                  }
+                  break;
                 }
+              } else {
+                console.warn(`[Client Chat Cascade] Modelo ${candidate} no disponible, probando alternativo...`);
               }
+            } catch (candErr) {
+              if (controller.signal.aborted) break;
             }
           }
-
           clearTimeout(timeoutId);
-          if (res.ok) {
-            const data = await res.json();
-            reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-          }
         } else if (provider === 'openai') {
           const res = await fetch('https://api.openai.com/v1/chat/completions', {
             method: 'POST',
@@ -389,7 +381,7 @@
               'Authorization': `Bearer ${aiConfig.apiKey}`
             },
             body: JSON.stringify({
-              model: model,
+              model: preferredModel,
               messages: [
                 { role: 'system', content: systemPrompt },
                 { role: 'user', content: userMessage }
