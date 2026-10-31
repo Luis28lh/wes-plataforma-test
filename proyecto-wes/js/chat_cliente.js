@@ -130,30 +130,6 @@
           </div>
         </div>
 
-        <!-- Barra Horizontal de Sugerencias Rápidas -->
-        <div id="wes-chat-quick-chips" class="px-3 py-2 bg-white border-t border-slate-100 flex items-center space-x-1.5 overflow-x-auto shrink-0 scrollbar-none">
-          <button type="button" onclick="handleQuickChipClick('ticket')" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 rounded-full text-[11px] font-bold whitespace-nowrap transition flex items-center space-x-1 shadow-2xs">
-            <i class="fas fa-search text-[10px] text-amber-600"></i>
-            <span>Consultar Ticket</span>
-          </button>
-          <button type="button" onclick="handleQuickChipClick('motores')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-full text-[11px] font-semibold whitespace-nowrap transition flex items-center space-x-1">
-            <i class="fas fa-door-open text-[10px] text-wes-blue"></i>
-            <span>Motores CAME</span>
-          </button>
-          <button type="button" onclick="handleQuickChipClick('inversores')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-full text-[11px] font-semibold whitespace-nowrap transition flex items-center space-x-1">
-            <i class="fas fa-car-battery text-[10px] text-emerald-600"></i>
-            <span>Inversores</span>
-          </button>
-          <button type="button" onclick="handleQuickChipClick('horarios')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-full text-[11px] font-semibold whitespace-nowrap transition flex items-center space-x-1">
-            <i class="fas fa-clock text-[10px] text-blue-600"></i>
-            <span>Horarios & Taller</span>
-          </button>
-          <button type="button" onclick="handleQuickChipClick('soporte')" class="px-2.5 py-1 bg-slate-100 hover:bg-slate-200 text-slate-800 border border-slate-300 rounded-full text-[11px] font-semibold whitespace-nowrap transition flex items-center space-x-1">
-            <i class="fas fa-tools text-[10px] text-purple-600"></i>
-            <span>Pedir Servicio</span>
-          </button>
-        </div>
-
         <!-- Formulario de Entrada de Texto -->
         <form id="wes-chat-input-form" onsubmit="handleChatSubmit(event)" class="p-3 bg-white border-t border-slate-200 flex items-center space-x-2 shrink-0">
           <input type="text" id="wes-chat-user-input" placeholder="Escribe tu consulta o número de ticket..." autocomplete="off" class="flex-1 px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:border-wes-gold focus:bg-white transition shadow-inner">
