@@ -1,7 +1,15 @@
-// ==========================================================================
-// WARN ELECTRICAL SERVICES, SRL (WES)
-// Controlador Maestro del Portal Administrativo - js/admin_app.js
-// ==========================================================================
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+if (typeof window !== 'undefined') {
+  window.escapeHtml = escapeHtml;
+}
 
 const AdminApp = {
   activeModule: 'dashboard',
@@ -2907,10 +2915,11 @@ Reglas de respuesta:
   },
 
   renderIAConfig(container) {
-    const config = this.getIAConfig();
-    const hasKey = Boolean(config.apiKey && config.apiKey.length > 5);
+    try {
+      const config = this.getIAConfig();
+      const hasKey = Boolean(config.apiKey && config.apiKey.length > 5);
 
-    container.innerHTML = `
+      container.innerHTML = `
       <div class="space-y-6 animate-fadeIn">
         
         <!-- Encabezado de la Sección -->
@@ -3117,6 +3126,15 @@ Reglas de respuesta:
 
       </div>
     `;
+    } catch (err) {
+      console.error('[AdminApp] Error renderizando panel de IA:', err);
+      container.innerHTML = `
+        <div class="p-6 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800">
+          <h3 class="font-bold text-sm mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Error al cargar panel de IA</h3>
+          <p class="text-xs font-mono">${escapeHtml(err.message)}</p>
+        </div>
+      `;
+    }
   },
 
   toggleIAPasswordVisibility() {
