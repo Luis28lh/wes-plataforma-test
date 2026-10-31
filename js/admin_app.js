@@ -2918,6 +2918,47 @@ Reglas de respuesta:
     };
   },
 
+  getModelOptionsHtml(provider, selectedModel = '') {
+    if (provider === 'gemini') {
+      const geminiModels = [
+        { id: 'gemini-2.0-flash', label: '⚡ gemini-2.0-flash (Recomendado actual · Rápido y multimodal)' },
+        { id: 'gemini-1.5-flash-latest', label: '⚡ gemini-1.5-flash-latest (Alias estable oficial)' },
+        { id: 'gemini-2.5-flash', label: '🚀 gemini-2.5-flash (Generación avanzada)' },
+        { id: 'gemini-1.5-flash-8b', label: '⚡ gemini-1.5-flash-8b (Ultra ligero y bajo consumo)' },
+        { id: 'gemini-1.5-pro-latest', label: '🧠 gemini-1.5-pro-latest (Razonamiento profundo)' },
+        { id: 'gemini-2.0-flash-exp', label: '🧪 gemini-2.0-flash-exp (Experimental)' }
+      ];
+
+      let options = geminiModels.map(m => `
+        <option value="${m.id}" ${selectedModel === m.id ? 'selected' : ''}>${m.label}</option>
+      `);
+
+      if (selectedModel && !geminiModels.some(m => m.id === selectedModel)) {
+        options.unshift(`<option value="${escapeHtml(selectedModel)}" selected>★ ${escapeHtml(selectedModel)} (Activo en cuenta)</option>`);
+      }
+
+      return options.join('');
+    } else if (provider === 'openai') {
+      const openaiModels = [
+        { id: 'gpt-4o-mini', label: '⚡ gpt-4o-mini (Recomendado · Rápido y económico)' },
+        { id: 'gpt-4o', label: '🧠 gpt-4o (Alta capacidad y razonamiento)' },
+        { id: 'gpt-3.5-turbo', label: '📦 gpt-3.5-turbo (Estándar legado)' }
+      ];
+
+      let options = openaiModels.map(m => `
+        <option value="${m.id}" ${selectedModel === m.id ? 'selected' : ''}>${m.label}</option>
+      `);
+
+      if (selectedModel && !openaiModels.some(m => m.id === selectedModel)) {
+        options.unshift(`<option value="${escapeHtml(selectedModel)}" selected>★ ${escapeHtml(selectedModel)} (Personalizado)</option>`);
+      }
+
+      return options.join('');
+    } else {
+      return `<option value="wes-local-rules" selected>Modo Autónomo Local WES (Reglas y FAQ)</option>`;
+    }
+  },
+
   renderIAConfig(container) {
     try {
       const config = this.getIAConfig();
@@ -3001,20 +3042,20 @@ Reglas de respuesta:
 
               <div>
                 <div class="flex items-center justify-between mb-1">
-                  <label class="block text-xs font-bold text-slate-700">Modelo Seleccionado</label>
+                  <label class="block text-xs font-bold text-slate-700">Modelo Activo (Menú Desplegable) *</label>
                   <button type="button" onclick="AdminApp.autoDetectModels()" id="btn-auto-detect-models" class="text-[11px] text-wes-blue hover:underline font-semibold flex items-center space-x-1">
                     <i class="fas fa-magic text-xs text-amber-500 mr-1"></i>
-                    <span>Auto-detectar Modelos</span>
+                    <span>Consultar modelos de mi clave</span>
                   </button>
                 </div>
-                <input type="text" id="admin-ia-model" name="model" value="${escapeHtml(config.model)}" placeholder="gemini-2.0-flash o gemini-1.5-flash-latest" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
-                <div id="ia-detected-models-container" class="mt-1.5 hidden"></div>
-                <div class="flex flex-wrap items-center gap-1 mt-1.5 text-[10px]">
-                  <span class="text-slate-400 font-medium">Sugeridos:</span>
-                  <button type="button" onclick="document.getElementById('admin-ia-model').value='gemini-2.0-flash'" class="px-1.5 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 rounded font-mono transition">gemini-2.0-flash</button>
-                  <button type="button" onclick="document.getElementById('admin-ia-model').value='gemini-1.5-flash-latest'" class="px-1.5 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 rounded font-mono transition">gemini-1.5-flash-latest</button>
-                  <button type="button" onclick="document.getElementById('admin-ia-model').value='gemini-2.5-flash'" class="px-1.5 py-0.5 bg-slate-100 hover:bg-amber-100 text-slate-700 rounded font-mono transition">gemini-2.5-flash</button>
-                </div>
+                <select id="admin-ia-model" name="model" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono font-bold text-slate-800 focus:ring-2 focus:ring-wes-blue focus:bg-white focus:outline-none">
+                  ${this.getModelOptionsHtml(config.provider, config.model)}
+                </select>
+                <div id="ia-detected-models-container" class="mt-2 hidden"></div>
+                <p class="text-[10px] text-slate-400 mt-1 flex items-center space-x-1">
+                  <i class="fas fa-info-circle text-amber-500 mr-1"></i>
+                  <span>Para Google Gemini, <strong>gemini-2.0-flash</strong> o <strong>gemini-1.5-flash-latest</strong> son los recomendados.</span>
+                </p>
               </div>
 
               <!-- Parámetros del Modelo (Taller 3) -->
@@ -3172,15 +3213,11 @@ Reglas de respuesta:
   },
 
   handleIAProviderChange(provider) {
-    const modelInput = document.getElementById('admin-ia-model');
-    if (!modelInput) return;
-    if (provider === 'gemini') {
-      modelInput.value = 'gemini-2.0-flash';
-    } else if (provider === 'openai') {
-      modelInput.value = 'gpt-4o-mini';
-    } else if (provider === 'local') {
-      modelInput.value = 'wes-local-rules';
-    }
+    const modelSelect = document.getElementById('admin-ia-model');
+    if (!modelSelect) return;
+    const defaultModel = (provider === 'gemini') ? 'gemini-2.0-flash' : (provider === 'openai') ? 'gpt-4o-mini' : 'wes-local-rules';
+    modelSelect.innerHTML = this.getModelOptionsHtml(provider, defaultModel);
+    modelSelect.value = defaultModel;
   },
 
   async fetchWorkingGeminiModel(apiKey, preferredModel) {
@@ -3212,20 +3249,21 @@ Reglas de respuesta:
     const key = document.getElementById('admin-ia-key')?.value.trim();
     const provider = document.getElementById('admin-ia-provider')?.value || 'gemini';
     const btn = document.getElementById('btn-auto-detect-models');
+    const modelSelect = document.getElementById('admin-ia-model');
     const container = document.getElementById('ia-detected-models-container');
 
     if (!key) {
-      showToast('Ingresa tu clave de API primero para consultar los modelos.', 'warning');
+      showToast('Ingresa tu clave de API primero en el campo de arriba.', 'warning');
       return;
     }
 
     if (provider !== 'gemini') {
-      showToast('Para OpenAI puedes usar: gpt-4o-mini o gpt-4o.', 'info');
+      showToast('Para OpenAI los modelos activos son gpt-4o-mini y gpt-4o (ya en el menú).', 'info');
       return;
     }
 
     const originalText = btn ? btn.innerHTML : '';
-    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Detectando...';
+    if (btn) btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> Consultando a Google...';
 
     try {
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models?key=${key}`);
@@ -3239,32 +3277,37 @@ Reglas de respuesta:
         .map(m => m.name.replace(/^models\//, ''));
 
       if (available.length === 0) {
-        throw new Error('No se encontraron modelos con soporte generateContent.');
+        throw new Error('No se encontraron modelos con soporte generateContent en tu clave.');
       }
 
-      const best = available.find(m => m.includes('2.0-flash') || m.includes('1.5-flash') || m.includes('flash')) || available[0];
-      const modelInput = document.getElementById('admin-ia-model');
-      if (modelInput) {
-        modelInput.value = best;
+      // Reconstruir el desplegable con todos los modelos disponibles
+      let optionsHtml = '';
+      available.forEach(m => {
+        const isFlash = m.includes('flash');
+        const badge = isFlash ? '⚡ ' : '🔹 ';
+        optionsHtml += `<option value="${m}">${badge}${m} ${isFlash ? '(Recomendado)' : ''}</option>`;
+      });
+
+      const best = available.find(m => m.includes('2.0-flash') || m.includes('1.5-flash-latest') || m.includes('flash')) || available[0];
+      if (modelSelect) {
+        modelSelect.innerHTML = optionsHtml;
+        modelSelect.value = best;
       }
 
       if (container) {
         container.classList.remove('hidden');
         container.innerHTML = `
-          <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
-            <span class="text-[10px] font-bold text-slate-600 uppercase block">Modelos activos en tu clave (haz clic para usar):</span>
-            <div class="flex flex-wrap gap-1 max-h-24 overflow-y-auto pt-0.5">
-              ${available.map(m => `
-                <button type="button" onclick="document.getElementById('admin-ia-model').value = '${m}'; showToast('Modelo seleccionado: ${m}', 'info');" class="px-2 py-0.5 bg-white hover:bg-amber-100 border border-slate-200 text-slate-700 rounded-md text-[10px] font-mono transition">
-                  ${m}
-                </button>
-              `).join('')}
-            </div>
+          <div class="p-2.5 bg-emerald-50 border border-emerald-200 rounded-xl space-y-1 text-xs">
+            <span class="text-[11px] font-bold text-emerald-900 flex items-center space-x-1">
+              <i class="fas fa-check-circle text-emerald-600"></i>
+              <span>¡${available.length} modelos detectados en tu cuenta! El desplegable ha sido actualizado.</span>
+            </span>
+            <span class="text-[10px] text-emerald-800">Modelo activo seleccionado: <strong>${best}</strong></span>
           </div>
         `;
       }
 
-      showToast(`¡${available.length} modelos detectados! Seleccionado: ${best}`, 'success');
+      showToast(`¡${available.length} modelos detectados! El menú desplegable se actualizó.`, 'success');
     } catch (e) {
       showToast(`Error al consultar modelos: ${e.message}`, 'error');
     } finally {
